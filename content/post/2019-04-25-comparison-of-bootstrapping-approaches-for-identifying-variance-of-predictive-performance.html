@@ -1,0 +1,214 @@
+---
+title: Comparison of bootstrapping approaches for identifying variance of predictive
+  performance
+author: Gary Weissman
+date: '2019-04-25'
+slug: comparison-of-bootstrapping-approaches-for-identifying-variance-of-predictive-performance
+categories:
+  - blog
+  - r
+  - bootstrapping
+  - predictive modeling
+tags: []
+image:
+  caption: ''
+  focal_point: ''
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>Bootstrapping is a helpful technique for identifying the variance of an estimate in a given sample when no other data are available. In the case of the evaluation of clinical prediction models, bootstrapping can be used to estimate confidence intervals around performance metrics such as the Brier score, the c-statistic, and others. When the original model and its tuning parameters, and the original dataset are available, the data can be resampled and the model refit on each replicate to make predictions. These predictions can then be used to calculate a performance metric. However, sometimes only the predicted probabilities of the original model on the original dataset are available. In this case, the predicted probabilities can be resampled and the performance metric can be calculated on each of these replicates. How do these approaches compare?</p>
+</div>
+<div id="build-a-model" class="section level2">
+<h2>Build a model</h2>
+<p>Similar to the model built in <a href="https://gweissman.github.io/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/">another blog post about the Brier Score</a>, let’s build a model with the abalone dataset.</p>
+<pre class="r"><code># set seed
+set.seed(24601)
+
+# load libraries for plotting
+library(ggplot2)
+
+# get data
+df &lt;- read.csv(&#39;https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data&#39;)
+names(df) &lt;- c(&#39;sex&#39;, &#39;length&#39;, &#39;diameter&#39;, &#39;height&#39;, &#39;weight_whole&#39;, 
+               &#39;weight_shucked&#39;, &#39;weight_viscera&#39;, &#39;weight_shell&#39;, &#39;rings&#39;)
+# inspect data
+knitr::kable(head(df))</code></pre>
+<table>
+<colgroup>
+<col width="4%" />
+<col width="7%" />
+<col width="10%" />
+<col width="7%" />
+<col width="14%" />
+<col width="16%" />
+<col width="16%" />
+<col width="14%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">sex</th>
+<th align="right">length</th>
+<th align="right">diameter</th>
+<th align="right">height</th>
+<th align="right">weight_whole</th>
+<th align="right">weight_shucked</th>
+<th align="right">weight_viscera</th>
+<th align="right">weight_shell</th>
+<th align="right">rings</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">M</td>
+<td align="right">0.350</td>
+<td align="right">0.265</td>
+<td align="right">0.090</td>
+<td align="right">0.2255</td>
+<td align="right">0.0995</td>
+<td align="right">0.0485</td>
+<td align="right">0.070</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left">F</td>
+<td align="right">0.530</td>
+<td align="right">0.420</td>
+<td align="right">0.135</td>
+<td align="right">0.6770</td>
+<td align="right">0.2565</td>
+<td align="right">0.1415</td>
+<td align="right">0.210</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left">M</td>
+<td align="right">0.440</td>
+<td align="right">0.365</td>
+<td align="right">0.125</td>
+<td align="right">0.5160</td>
+<td align="right">0.2155</td>
+<td align="right">0.1140</td>
+<td align="right">0.155</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">I</td>
+<td align="right">0.330</td>
+<td align="right">0.255</td>
+<td align="right">0.080</td>
+<td align="right">0.2050</td>
+<td align="right">0.0895</td>
+<td align="right">0.0395</td>
+<td align="right">0.055</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left">I</td>
+<td align="right">0.425</td>
+<td align="right">0.300</td>
+<td align="right">0.095</td>
+<td align="right">0.3515</td>
+<td align="right">0.1410</td>
+<td align="right">0.0775</td>
+<td align="right">0.120</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">F</td>
+<td align="right">0.530</td>
+<td align="right">0.415</td>
+<td align="right">0.150</td>
+<td align="right">0.7775</td>
+<td align="right">0.2370</td>
+<td align="right">0.1415</td>
+<td align="right">0.330</td>
+<td align="right">20</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># Let&#39;s predict whether or not an abalone will have &gt; 10 rings
+m &lt;- glm(I(rings &gt; 10) ~ ., data = df, family = binomial)
+preds_m &lt;- predict(m, type = &#39;response&#39;)</code></pre>
+</div>
+<div id="performance-metric" class="section level2">
+<h2>Performance metric</h2>
+<p>Let’s calculate the Brier score as a measure of model performance.</p>
+<pre class="r"><code>brier_score &lt;- function(preds, obs) {
+  mean((obs - preds)^2)
+}</code></pre>
+</div>
+<div id="boostrapping-the-predicted-probabilities-only" class="section level2">
+<h2>Boostrapping the predicted probabilities only</h2>
+<p>Now let’s estimate the 95% confidence interval of the Brier score using only the predicted probabilities.</p>
+<pre class="r"><code>N &lt;- 1000
+
+get_boot_est_preds &lt;- function(preds, obs, metric) {
+  idx &lt;- sample(length(preds), replace = TRUE)
+  metric(preds[idx], obs[idx])
+}
+
+reps_pred &lt;- replicate(N, get_boot_est_preds(preds_m, df$rings &gt; 10, brier_score))</code></pre>
+</div>
+<div id="bootstrapping-to-refit-the-model-on-each-replicate" class="section level2">
+<h2>Bootstrapping to refit the model on each replicate</h2>
+<pre class="r"><code>get_boot_est_mod &lt;- function(df, metric) {
+    idx &lt;- sample(nrow(df), replace = TRUE)
+    m_b &lt;- glm(I(rings &gt; 10) ~ ., data = df[idx,], family = binomial)
+    preds_m_b &lt;- predict(m_b, type = &#39;response&#39;)
+    metric(preds_m_b, df[idx,]$rings &gt; 10)
+}
+
+reps_model &lt;- replicate(N, get_boot_est_mod(df, brier_score))</code></pre>
+</div>
+<div id="optimism-corrected-bootstrapping-to-refit-the-model-on-each-replicate" class="section level2">
+<h2>Optimism corrected bootstrapping to refit the model on each replicate</h2>
+<p>As pointed out by Ewout Steyerberg, these estimates should be optimism-corrected for potential overfitting. Let’s look at the difference in estimates if we make predictions on the initial dataset rather than on the bootstrapped sample.</p>
+<pre class="r"><code>get_boot_est_mod &lt;- function(df, metric) {
+    idx &lt;- sample(nrow(df), replace = TRUE)
+    m_b &lt;- glm(I(rings &gt; 10) ~ ., data = df[idx,], family = binomial)
+    preds_m_b &lt;- predict(m_b, data = df, type = &#39;response&#39;)
+    metric(preds_m_b, df$rings &gt; 10)
+}
+
+reps_model_opt &lt;- replicate(N, get_boot_est_mod(df, brier_score))</code></pre>
+</div>
+<div id="evaluate-results" class="section level2">
+<h2>Evaluate results</h2>
+<p>Let’s look at the distrbution of the Brier score estimates using both approaches.</p>
+<pre class="r"><code>res &lt;- rbind(data.frame(brier_score = reps_pred,
+                        approach = &#39;predictions&#39;),
+             data.frame(brier_score = reps_model,
+                        approach = &#39;refit_model&#39;),
+             data.frame(brier_score = reps_model_opt,
+                        approach = &#39;refit_opt&#39;))
+
+# Plot distribution of bootstrapped Brier scores
+ggplot(res, aes(brier_score, color = approach)) + 
+  geom_density() +
+  theme_bw()</code></pre>
+<p><img src="/post/2019-04-25-comparison-of-bootstrapping-approaches-for-identifying-variance-of-predictive-performance_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>We can calculate 95% confidence intervals using a simple percentile approach.</p>
+<pre class="r"><code>calc_ci_95 &lt;- function(v) {
+  q &lt;- format(quantile(v, probs = c(0.025, 0.975)), digits = 5)
+  paste0(&#39;(&#39;,q[1],&#39; to &#39;,q[2],&#39;)&#39;)
+  }
+
+cat(&#39;CI using bootstrapped estimates from predictions only:&#39;,
+    calc_ci_95(reps_pred),&#39;\n&#39;)</code></pre>
+<pre><code>## CI using bootstrapped estimates from predictions only: (0.14153 to 0.15414)</code></pre>
+<pre class="r"><code>cat(&#39;CI using bootstrapped estimates from refitting the model:&#39;,
+    calc_ci_95(reps_model),&#39;\n&#39;)</code></pre>
+<pre><code>## CI using bootstrapped estimates from refitting the model: (0.14128 to 0.15395)</code></pre>
+<pre class="r"><code>cat(&#39;CI using bootstrapped estimates from refitting the model with an optimism correction:&#39;,
+    calc_ci_95(reps_model_opt),&#39;\n&#39;)</code></pre>
+<pre><code>## CI using bootstrapped estimates from refitting the model with an optimism correction: (0.29691 to 0.31728)</code></pre>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>While not exactly the same, the first two approaches yield very similar results. However, this outcome may vary depending on potential bias in the original dataset, and the sensitivity of the model to such bias. The third approach demonstrates the likely high degree of overfitting in this model, and the need to properly correct for optimism when reporting predictive performance in the absence of a separate testing sample.</p>
+</div>

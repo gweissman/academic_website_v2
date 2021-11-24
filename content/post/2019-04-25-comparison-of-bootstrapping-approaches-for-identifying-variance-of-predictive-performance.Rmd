@@ -1,0 +1,136 @@
+---
+title: Comparison of bootstrapping approaches for identifying variance of predictive
+  performance
+author: Gary Weissman
+date: '2019-04-25'
+slug: comparison-of-bootstrapping-approaches-for-identifying-variance-of-predictive-performance
+categories:
+  - blog
+  - r
+  - bootstrapping
+  - predictive modeling
+tags: []
+image:
+  caption: ''
+  focal_point: ''
+---
+
+## Background
+
+Bootstrapping is a helpful technique for identifying the variance of an estimate in a given sample when no other data are available. In the case of the evaluation of clinical prediction models, bootstrapping can be used to estimate confidence intervals around performance metrics such as the Brier score, the c-statistic, and others. When the original model and its tuning parameters, and the original dataset are available, the data can be resampled and the model refit on each replicate to make predictions. These predictions can then be used to calculate a performance metric. However, sometimes only the predicted probabilities of the original model on the original dataset are available. In this case, the predicted probabilities can be resampled and the performance metric can be calculated on each of these replicates. How do these approaches compare?
+
+## Build a model
+
+Similar to the model built in [another blog post about the Brier Score](https://gweissman.github.io/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/), let's build a model with the abalone dataset.
+
+```{r}
+# set seed
+set.seed(24601)
+
+# load libraries for plotting
+library(ggplot2)
+
+# get data
+df <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data')
+names(df) <- c('sex', 'length', 'diameter', 'height', 'weight_whole', 
+               'weight_shucked', 'weight_viscera', 'weight_shell', 'rings')
+# inspect data
+knitr::kable(head(df))
+
+# Let's predict whether or not an abalone will have > 10 rings
+m <- glm(I(rings > 10) ~ ., data = df, family = binomial)
+preds_m <- predict(m, type = 'response')
+```
+
+## Performance metric
+
+Let's calculate the Brier score as a measure of model performance.
+
+```{r}
+brier_score <- function(preds, obs) {
+  mean((obs - preds)^2)
+}
+```
+
+## Boostrapping the predicted probabilities only
+
+Now let's estimate the 95% confidence interval of the Brier score using only the predicted probabilities.
+
+```{r}
+N <- 1000
+
+get_boot_est_preds <- function(preds, obs, metric) {
+  idx <- sample(length(preds), replace = TRUE)
+  metric(preds[idx], obs[idx])
+}
+
+reps_pred <- replicate(N, get_boot_est_preds(preds_m, df$rings > 10, brier_score))
+```
+
+## Bootstrapping to refit the model on each replicate
+
+```{r}
+get_boot_est_mod <- function(df, metric) {
+    idx <- sample(nrow(df), replace = TRUE)
+    m_b <- glm(I(rings > 10) ~ ., data = df[idx,], family = binomial)
+    preds_m_b <- predict(m_b, type = 'response')
+    metric(preds_m_b, df[idx,]$rings > 10)
+}
+
+reps_model <- replicate(N, get_boot_est_mod(df, brier_score))
+```
+
+## Optimism corrected bootstrapping to refit the model on each replicate 
+
+As pointed out by Ewout Steyerberg, these estimates should be optimism-corrected for potential overfitting. Let's look at the difference in estimates if we make predictions on the initial dataset rather than on the bootstrapped sample.
+
+```{r}
+get_boot_est_mod <- function(df, metric) {
+    idx <- sample(nrow(df), replace = TRUE)
+    m_b <- glm(I(rings > 10) ~ ., data = df[idx,], family = binomial)
+    preds_m_b <- predict(m_b, data = df, type = 'response')
+    metric(preds_m_b, df$rings > 10)
+}
+
+reps_model_opt <- replicate(N, get_boot_est_mod(df, brier_score))
+```
+
+
+
+## Evaluate results
+
+Let's look at the distrbution of the Brier score estimates using both approaches.
+
+```{r}
+res <- rbind(data.frame(brier_score = reps_pred,
+                        approach = 'predictions'),
+             data.frame(brier_score = reps_model,
+                        approach = 'refit_model'),
+             data.frame(brier_score = reps_model_opt,
+                        approach = 'refit_opt'))
+
+# Plot distribution of bootstrapped Brier scores
+ggplot(res, aes(brier_score, color = approach)) + 
+  geom_density() +
+  theme_bw()
+```
+
+We can calculate 95% confidence intervals using a simple percentile approach.
+
+```{r}
+calc_ci_95 <- function(v) {
+  q <- format(quantile(v, probs = c(0.025, 0.975)), digits = 5)
+  paste0('(',q[1],' to ',q[2],')')
+  }
+
+cat('CI using bootstrapped estimates from predictions only:',
+    calc_ci_95(reps_pred),'\n')
+cat('CI using bootstrapped estimates from refitting the model:',
+    calc_ci_95(reps_model),'\n')
+cat('CI using bootstrapped estimates from refitting the model with an optimism correction:',
+    calc_ci_95(reps_model_opt),'\n')
+```
+
+## Summary
+
+While not exactly the same, the first two approaches yield very similar results. However, this outcome may vary depending on potential bias in the original dataset, and the sensitivity of the model to such bias. The third approach demonstrates the likely high degree of overfitting in this model, and the need to properly correct for optimism when reporting predictive performance in the absence of a separate testing sample.

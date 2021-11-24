@@ -1,52 +1,45 @@
 ---
-bio: My research interests include distributed robotics, mobile computing and programmable
-  matter.
+authors:
+- admin
+bio: I am a pulmonary and critical care physician at the University of Pennsylvania Perelman School of Medicine, and core faculty member at the Palliative and Advanced Illness Research (PAIR) Center. My work seeks to translate innovations in artificial intelligence methods into bedside clinical decision support systems that alleviate uncertainty in critical clinical decisions. My research interests include clinical informatics, natural language processing, machine learning, population health, and pragmatic trials.
 education:
   courses:
-  - course: PhD in Artificial Intelligence
-    institution: Stanford University
-    year: 2012
-  - course: MEng in Artificial Intelligence
-    institution: Massachusetts Institute of Technology
-    year: 2009
-  - course: BSc in Artificial Intelligence
-    institution: Massachusetts Institute of Technology
-    year: 2008
-email: ""
-highlight_name: true
+  - course: MS in Health Policy Research
+    institution: University of Pennsylvania
+    year: 2017
+  - course: MD
+    institution: Jefferson Medical College
+    year: 2011
+  - course: AB in Physics
+    institution: Dartmouth College
+    year: 2002
+email: "gary.weissman@pennmedicine.upenn.edu"
 interests:
-- Artificial Intelligence
-- Computational Linguistics
-- Information Retrieval
+- Pulmonary and Critical Care Medicine
+- Clinical Informatics
+- Natural Language Processing
+name: Gary Weissman
 organizations:
-- name: Stanford University
-  url: https://www.stanford.edu/
-role: Professor of Artificial Intelligence
+- name: University of Pennsylvania
+  url: "http://pair.upenn.edu/people/core-faculty/gary-weissman"
+role: Assistant Professor of Medicine
 social:
 - icon: envelope
   icon_pack: fas
-  link: /#contact
-- display:
-    header: true
-  icon: twitter
+  link: '#contact'
+- icon: twitter
   icon_pack: fab
-  label: Follow me on Twitter
-  link: https://twitter.com/GeorgeCushen
-- icon: graduation-cap
-  icon_pack: fas
-  link: https://scholar.google.co.uk/citations?user=sIwtMXoAAAAJ
+  link: https://twitter.com/garyweissman
+- icon: google-scholar
+  icon_pack: ai
+  link: https://scholar.google.com/citations?hl=en&user=Ollx0JMAAAAJ
 - icon: github
   icon_pack: fab
-  link: https://github.com/gcushen
-- icon: linkedin
-  icon_pack: fab
-  link: https://www.linkedin.com/
+  link: https://github.com/gweissman
 superuser: true
-title: Alice Bighetti (吳恩達)
+user_groups:
+- Researchers
+- Visitors
 ---
 
-Alice Bighetti is a professor of artificial intelligence at the Stanford AI Lab. Her research interests include distributed robotics, mobile computing and programmable matter. She leads the Robotic Neurobiology group, which develops self-reconfiguring robots, systems of self-organizing robots, and mobile sensor networks.
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed neque elit, tristique placerat feugiat ac, facilisis vitae arcu. Proin eget egestas augue. Praesent ut sem nec arcu pellentesque aliquet. Duis dapibus diam vel metus tempus vulputate.
-
-{{< icon name="download" pack="fas" >}} Download my {{< staticref "uploads/resume.pdf" "newtab" >}}resumé{{< /staticref >}}.
+I am a pulmonary and critical care physician at the University of Pennsylvania Perelman School of Medicine, and core faculty member at the Palliative and Advanced Illness Research (PAIR) Center. My work seeks to translate innovations in artificial intelligence methods into bedside clinical decision support systems that alleviate uncertainty in critical clinical decisions. My research interests include clinical informatics, natural language processing, machine learning, population health, and pragmatic trials.I am also a Senior Fellow at the Leonard Davis Institute of Health Economics and the Penn Institute of Bioinformatics.

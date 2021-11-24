@@ -1,0 +1,1452 @@
+<!DOCTYPE html><html lang="en-us" >
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  
+  
+    <meta name="generator" content="Wowchemy 5.3.0 for Hugo" />
+  
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  
+
+  
+  
+  
+    
+  
+  <meta name="description" content="Background The Brier Score is a composite measure of discrimination and calibration for a prediction model. The Brier Score is defined as
+\[ BS = \frac{1}{N} \sum (y_i - \hat y_i)^2, \]" />
+
+  
+  <link rel="alternate" hreflang="en-us" href="https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/" />
+
+  
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+
+  
+  
+  
+    <meta name="theme-color" content="#1565c0" />
+  
+
+  
+  
+
+  
+
+  <link rel="stylesheet" href="/css/vendor-bundle.min.f1ecf783c14edc00c9320c205831ad8e.css" media="print" onload="this.media='all'">
+
+  
+  
+  
+    
+    
+
+    
+    
+    
+    
+      
+      
+    
+    
+    
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github.min.css" crossorigin="anonymous" title="hl-light" media="print" onload="this.media='all'">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" media="print" onload="this.media='all'" disabled>
+        
+      
+    
+
+    
+    
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" integrity="sha512-1xoFisiGdy9nvho8EgXuXvnpR5GAMSjFwp40gSRE3NwdUdIMIKuPa7bqoUhLD0O/5tPNhteAsE5XyyMi5reQVA==" crossorigin="anonymous" media="print" onload="this.media='all'">
+    
+
+    
+
+    
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+        
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+      
+      
+
+      
+      
+
+      
+    
+  
+
+  
+  
+  
+    
+      
+      <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap" media="print" onload="this.media='all'">
+    
+  
+
+  
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/wowchemy.9f457a613f02e9027025db7311c58ccf.css" />
+
+  
+
+
+
+  
+
+  
+
+  
+
+
+
+
+  
+  
+  
+
+  
+
+  
+    <link rel="manifest" href="/manifest.webmanifest" />
+  
+
+  <link rel="icon" type="image/png" href="/media/icon_hua2ec155b4296a9c9791d015323e16eb5_11927_32x32_fill_lanczos_center_3.png" />
+  <link rel="apple-touch-icon" type="image/png" href="/media/icon_hua2ec155b4296a9c9791d015323e16eb5_11927_180x180_fill_lanczos_center_3.png" />
+
+  <link rel="canonical" href="https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/" />
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary" />
+  
+  <meta property="og:site_name" content="Academic" />
+  <meta property="og:url" content="https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/" />
+  <meta property="og:title" content="Evaluating the equivalence of different formulations of the scaled Brier score | Academic" />
+  <meta property="og:description" content="Background The Brier Score is a composite measure of discrimination and calibration for a prediction model. The Brier Score is defined as
+\[ BS = \frac{1}{N} \sum (y_i - \hat y_i)^2, \]" /><meta property="og:image" content="https://academic-demo.netlify.app/media/icon_hua2ec155b4296a9c9791d015323e16eb5_11927_512x512_fill_lanczos_center_3.png" />
+    <meta property="twitter:image" content="https://academic-demo.netlify.app/media/icon_hua2ec155b4296a9c9791d015323e16eb5_11927_512x512_fill_lanczos_center_3.png" /><meta property="og:locale" content="en-us" />
+  
+    
+      <meta
+        property="article:published_time"
+        content="2019-04-23T00:00:00&#43;00:00"
+      />
+    
+    <meta property="article:modified_time" content="2019-04-23T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/"
+  },
+  "headline": "Evaluating the equivalence of different formulations of the scaled Brier score",
+  
+  "datePublished": "2019-04-23T00:00:00Z",
+  "dateModified": "2019-04-23T00:00:00Z",
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Academic",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://academic-demo.netlify.app/media/icon_hua2ec155b4296a9c9791d015323e16eb5_11927_192x192_fill_lanczos_center_3.png"
+    }
+  },
+  "description": "Background The Brier Score is a composite measure of discrimination and calibration for a prediction model. The Brier Score is defined as\n\\[ BS = \\frac{1}{N} \\sum (y_i - \\hat y_i)^2, \\]"
+}
+</script>
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+  <title>Evaluating the equivalence of different formulations of the scaled Brier score | Academic</title>
+</head>
+
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" class="page-wrapper   " data-wc-page-id="84a76f3c896e4797207fe1ff0ec5b2d3" >
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <script src="/js/wowchemy-init.min.8988fb2a4bba758785868cfcb5244555.js"></script>
+
+  
+
+
+<aside class="search-modal" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#" aria-label="Close"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search" class="form-control"
+        aria-label="Search...">
+        
+      </div>
+
+      
+      
+
+      
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+  <div class="page-header">
+    
+
+
+
+
+
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container-xl">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Academic</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar-content" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Academic</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+            
+            
+            
+              
+            
+            
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about"><span>Demo</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+            
+            
+            
+              
+            
+            
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+            
+            
+            
+              
+            
+            
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#projects"><span>Projects</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+            
+            
+            
+              
+            
+            
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#talks"><span>Talks</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+            
+            
+            
+              
+            
+            
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#featured"><span>Publications</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/courses/"><span>Courses</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+
+        
+        
+        
+        
+
+        
+          
+            
+            
+          
+          
+            
+            
+            
+              
+            
+            
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#contact"><span>Contact</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+
+      
+      
+        
+      
+
+      
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#" aria-label="Search"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link" data-toggle="dropdown" aria-haspopup="true" aria-label="Display preferences">
+          <i class="fas fa-moon" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  </div>
+
+  <div class="page-body">
+    <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Evaluating the equivalence of different formulations of the scaled Brier score</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    Apr 23, 2019
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    4 min read
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+  
+  <span class="middot-divider"></span>
+  <span class="article-categories">
+    <i class="fas fa-folder mr-1"></i><a href="/category/brier-score/">brier score</a>, <a href="/category/predictive-modeling/">predictive modeling</a></span>
+  
+
+</div>
+
+    
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>The Brier Score is a composite measure of discrimination and calibration for a prediction model. The Brier Score is defined as</p>
+<p><span class="math display">\[
+BS = \frac{1}{N} \sum (y_i - \hat y_i)^2,
+\]</span></p>
+<p>where <span class="math inline">\(N\)</span> is the number of observations, <span class="math inline">\(y_i\)</span> is the observed outcome, either 0 or 1, and <span class="math inline">\(\hat y_i\)</span> is the predicted probability for the <span class="math inline">\(i\)</span>th observation. Let’s create an R function to calculate the Brier Score:</p>
+<pre class="r"><code>brier_score &lt;- function(obs, pred) {
+  mean((obs - pred)^2)
+}</code></pre>
+<p>The scaled Brier Score accounts for the event rate and provides an immediate comparison to an uninformative model that is equivalent to “just guess the event rate.” An intuitive way to define the scaled Brier Score (also called the “Brier skill score”) is</p>
+<p><span class="math display">\[
+BS_{scaled} = 1 - \frac{BS}{BS_{max}},
+\]</span></p>
+<p>where <span class="math inline">\(BS_{max} = \frac{1}{N} \sum (y_i - \bar y_i)^2\)</span> and <span class="math inline">\(\bar y_i\)</span> is the event rate among the observed outcome.</p>
+</div>
+<div id="my-confusion" class="section level2">
+<h2>My confusion</h2>
+<p>This formulation of the scaled Brier Score makes intuitive sense to me and is how I go about calculating it in practice. However, two other distinct formulations have been proposed for calculating <span class="math inline">\(BS_{max}\)</span> that — at least to the limits of my algebraic skills – differ. Thus, here I proposed a numeric investigation of these different definitions to see if they are indeed equivalent.</p>
+</div>
+<div id="definition-1" class="section level2">
+<h2>Definition 1</h2>
+<p>This is the intuitive definition to which I am accustomed, and is made explicit here: <a href="https://www.ncbi.nlm.nih.gov/pubmed/29713202" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/29713202</a></p>
+<p><span class="math display">\[
+BS_{scaled} = 1 - \frac{\frac{1}{N} \sum (y_i - \hat y_i)^2}{\frac{1}{N} \sum (y_i - \bar y_i)^2}.
+\]</span></p>
+<p>Let’s create an R function to calculate this value.</p>
+<pre class="r"><code>scaled_brier_score_1 &lt;- function(obs, pred) {
+  1 - (brier_score(obs, pred) / brier_score(obs, mean(obs)))
+}</code></pre>
+</div>
+<div id="definition-2" class="section level2">
+<h2>Definition 2</h2>
+<p>A second formulation of the scaled Brier Score is defined with a slightly different definition of <span class="math inline">\(BS_{max}\)</span>, which is in this case described in <a href="https://www.ncbi.nlm.nih.gov/pubmed/20010215" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/20010215</a></p>
+<p><span class="math display">\[
+BS_{max} = \bar p \times (1 - \bar p).
+\]</span></p>
+<p>Let’s create an R function to calculate this measure.</p>
+<pre class="r"><code>scaled_brier_score_2 &lt;- function(obs, pred) {
+  1 - (brier_score(obs, pred) / (mean(obs) * (1 - mean(obs))))
+}</code></pre>
+</div>
+<div id="definition-3" class="section level2">
+<h2>Definition 3</h2>
+<p>A third formulation of the scaled Brier Score is defined with a slightly different definition of <span class="math inline">\(BS_{max}\)</span>, which is in this case described in <a href="https://www.ncbi.nlm.nih.gov/pubmed/22961910" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/22961910</a></p>
+<p><span class="math display">\[
+BS_{max} = \bar p \times (1 - \bar p)^2 + (1 - \bar p) \times \bar p^2.
+\]</span></p>
+<p>Let’s create an R function to calculate this measure.</p>
+<pre class="r"><code>scaled_brier_score_3 &lt;- function(obs, pred) {
+  1 - (brier_score(obs, pred) / (mean(obs) * (1 - mean(obs))^2 + (1 - mean(obs)) * mean(obs)^2))
+}</code></pre>
+</div>
+<div id="build-a-model" class="section level2">
+<h2>Build a model</h2>
+<p>Let’s build a sample model based on the UCI abalone data (<a href="https://archive.ics.uci.edu/ml/datasets/Abalone" class="uri">https://archive.ics.uci.edu/ml/datasets/Abalone</a>).</p>
+<pre class="r"><code># get data
+df &lt;- read.csv(&#39;https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data&#39;)
+names(df) &lt;- c(&#39;sex&#39;, &#39;length&#39;, &#39;diameter&#39;, &#39;height&#39;, &#39;weight_whole&#39;, 
+               &#39;weight_shucked&#39;, &#39;weight_viscera&#39;, &#39;weight_shell&#39;, &#39;rings&#39;)
+# inspect data
+knitr::kable(head(df))</code></pre>
+<table>
+<colgroup>
+<col width="4%" />
+<col width="7%" />
+<col width="10%" />
+<col width="7%" />
+<col width="14%" />
+<col width="16%" />
+<col width="16%" />
+<col width="14%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">sex</th>
+<th align="right">length</th>
+<th align="right">diameter</th>
+<th align="right">height</th>
+<th align="right">weight_whole</th>
+<th align="right">weight_shucked</th>
+<th align="right">weight_viscera</th>
+<th align="right">weight_shell</th>
+<th align="right">rings</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">M</td>
+<td align="right">0.350</td>
+<td align="right">0.265</td>
+<td align="right">0.090</td>
+<td align="right">0.2255</td>
+<td align="right">0.0995</td>
+<td align="right">0.0485</td>
+<td align="right">0.070</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left">F</td>
+<td align="right">0.530</td>
+<td align="right">0.420</td>
+<td align="right">0.135</td>
+<td align="right">0.6770</td>
+<td align="right">0.2565</td>
+<td align="right">0.1415</td>
+<td align="right">0.210</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left">M</td>
+<td align="right">0.440</td>
+<td align="right">0.365</td>
+<td align="right">0.125</td>
+<td align="right">0.5160</td>
+<td align="right">0.2155</td>
+<td align="right">0.1140</td>
+<td align="right">0.155</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">I</td>
+<td align="right">0.330</td>
+<td align="right">0.255</td>
+<td align="right">0.080</td>
+<td align="right">0.2050</td>
+<td align="right">0.0895</td>
+<td align="right">0.0395</td>
+<td align="right">0.055</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left">I</td>
+<td align="right">0.425</td>
+<td align="right">0.300</td>
+<td align="right">0.095</td>
+<td align="right">0.3515</td>
+<td align="right">0.1410</td>
+<td align="right">0.0775</td>
+<td align="right">0.120</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">F</td>
+<td align="right">0.530</td>
+<td align="right">0.415</td>
+<td align="right">0.150</td>
+<td align="right">0.7775</td>
+<td align="right">0.2370</td>
+<td align="right">0.1415</td>
+<td align="right">0.330</td>
+<td align="right">20</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># Let&#39;s predict whether or not an abalone will have &gt; 10 rings
+m1 &lt;- glm(I(rings &gt; 10) ~ ., data = df, family = binomial)
+preds_m1 &lt;- predict(m1, type = &#39;response&#39;)
+
+# And another model with severe class imablance
+m2 &lt;- glm(I(rings &gt; 3) ~ ., data = df, family = binomial)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>preds_m2 &lt;- predict(m2, type = &#39;response&#39;)</code></pre>
+</div>
+<div id="score-the-model" class="section level2">
+<h2>Score the model</h2>
+<pre class="r"><code># ---------- Model 1
+# Calculate the Brier Score
+brier_score(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.1479862</code></pre>
+<pre class="r"><code># Calculate each type of scaled Brier Score
+scaled_brier_score_1(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.3462507</code></pre>
+<pre class="r"><code>scaled_brier_score_2(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.3462507</code></pre>
+<pre class="r"><code>scaled_brier_score_3(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.3462507</code></pre>
+<pre class="r"><code># ---------- Model 2
+# Calculate the Brier Score
+brier_score(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.002690905</code></pre>
+<pre class="r"><code># Calculate each type of scaled Brier Score
+scaled_brier_score_1(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.3362851</code></pre>
+<pre class="r"><code>scaled_brier_score_2(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.3362851</code></pre>
+<pre class="r"><code>scaled_brier_score_3(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.3362851</code></pre>
+</div>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://twitter.com/intent/tweet?url=https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/&amp;text=Evaluating%20the%20equivalence%20of%20different%20formulations%20of%20the%20scaled%20Brier%20score" target="_blank" rel="noopener" class="share-btn-twitter">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.facebook.com/sharer.php?u=https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/&amp;t=Evaluating%20the%20equivalence%20of%20different%20formulations%20of%20the%20scaled%20Brier%20score" target="_blank" rel="noopener" class="share-btn-facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="mailto:?subject=Evaluating%20the%20equivalence%20of%20different%20formulations%20of%20the%20scaled%20Brier%20score&amp;body=https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/" target="_blank" rel="noopener" class="share-btn-email">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.linkedin.com/shareArticle?url=https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/&amp;title=Evaluating%20the%20equivalence%20of%20different%20formulations%20of%20the%20scaled%20Brier%20score" target="_blank" rel="noopener" class="share-btn-linkedin">
+          <i class="fab fa-linkedin-in"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="whatsapp://send?text=Evaluating%20the%20equivalence%20of%20different%20formulations%20of%20the%20scaled%20Brier%20score%20https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/" target="_blank" rel="noopener" class="share-btn-whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://service.weibo.com/share/share.php?url=https://academic-demo.netlify.app/post/evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score/&amp;title=Evaluating%20the%20equivalence%20of%20different%20formulations%20of%20the%20scaled%20Brier%20score" target="_blank" rel="noopener" class="share-btn-weibo">
+          <i class="fab fa-weibo"></i>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+  
+  
+    
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+      
+      <a href="https://academic-demo.netlify.app/"><img class="avatar mr-3 avatar-circle" src="/author/avatar_hu52a603635ecebd45650b162dadabb4e5_12861_270x270_fill_q75_lanczos_center.jpg" alt=""></a>
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="https://academic-demo.netlify.app/"></a></h5>
+      <h6 class="card-subtitle">Assistant Professor of Medicine</h6>
+      <p class="card-text">I am a pulmonary and critical care physician at the University of Pennsylvania Perelman School of Medicine, based at the Palliative and Advanced Illness Research (PAIR) Center. My research interests include clinical informatics, natural language processing, machine learning, population health, and pragmatic trials.</p>
+      <ul class="network-icon" aria-hidden="true">
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="/#contact" >
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://twitter.com/garyweissman" target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://scholar.google.com/citations?hl=en&amp;user=Ollx0JMAAAAJ" target="_blank" rel="noopener">
+        <i class="ai ai-google-scholar"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://github.com/gweissman" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </li>
+  
+</ul>
+
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+  </div>
+</article>
+  </div>
+
+  <div class="page-footer">
+    
+    
+    <div class="container">
+      <footer class="site-footer">
+
+  
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+
+
+
+
+
+  <p class="powered-by">
+    
+    
+    
+      
+      
+      
+      
+      
+      
+      Published with <a href="https://wowchemy.com/?utm_campaign=poweredby" target="_blank" rel="noopener">Wowchemy</a> — the free, <a href="https://github.com/wowchemy/wowchemy-hugo-modules" target="_blank" rel="noopener">open source</a> website builder that empowers creators.
+    
+  </p>
+</footer>
+
+    </div>
+    
+  </div>
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      
+
+    
+    <script src="/js/vendor-bundle.min.b73dfaac3b6499dc997741748a7c3fe2.js"></script>
+
+    
+    
+    
+      
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      
+
+      
+      
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/latex.min.js" crossorigin="anonymous"></script>
+        
+      
+
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js" integrity="sha512-SeiQaaDh73yrb56sTW/RgVdi/mMqNeM2oBwubFHagc5BkixSpP1fvqF47mKzPGWYSSy4RwbBunrJBQ4Co8fRWA==" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+      
+      <script id="search-hit-fuse-template" type="text/x-template">
+        <div class="search-hit" id="summary-{{key}}">
+          <div class="search-hit-content">
+            <div class="search-hit-name">
+              <a href="{{relpermalink}}">{{title}}</a>
+              <div class="article-metadata search-hit-type">{{type}}</div>
+              <p class="search-hit-description">{{snippet}}</p>
+            </div>
+          </div>
+        </div>
+      </script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+      
+    
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+      
+      
+      
+      
+      
+      
+      
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+      
+      
+    
+    
+    <script src="/en/js/wowchemy.min.d68ecd57c0ec1f1f61d65fd568f1c3a0.js"></script>
+
+    
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+
+</body>
+</html>

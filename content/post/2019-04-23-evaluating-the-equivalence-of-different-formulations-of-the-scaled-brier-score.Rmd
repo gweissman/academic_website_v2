@@ -1,0 +1,145 @@
+---
+title: Evaluating the equivalence of different formulations of the scaled Brier score
+author: Gary Weissman
+date: '2019-04-23'
+slug: evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score
+categories:
+  - brier score
+  - predictive modeling
+tags: []
+image:
+  caption: ''
+  focal_point: ''
+---
+
+## Background
+
+The Brier Score is a composite measure of discrimination and calibration for a prediction model. The Brier Score is defined as
+
+$$
+BS = \frac{1}{N} \sum (y_i - \hat y_i)^2,
+$$
+
+where $N$ is the number of observations, $y_i$ is the observed outcome, either 0 or 1, and $\hat y_i$ is the predicted probability for the $i$th observation. Let's create an R function to calculate the Brier Score:
+
+
+```{r}
+brier_score <- function(obs, pred) {
+  mean((obs - pred)^2)
+}
+```
+
+The scaled Brier Score accounts for the event rate and provides an immediate comparison to an uninformative model that is equivalent to "just guess the event rate." An intuitive way to define the scaled Brier Score (also called the "Brier skill score") is
+
+$$
+BS_{scaled} = 1 - \frac{BS}{BS_{max}},
+$$
+
+where $BS_{max} = \frac{1}{N} \sum (y_i - \bar y_i)^2$ and $\bar y_i$ is the event rate among the observed outcome.
+
+## My confusion
+
+This formulation of the scaled Brier Score makes intuitive sense to me and is how I go about calculating it in practice. However, two other distinct formulations have been proposed for calculating $BS_{max}$ that --- at least to the limits of my algebraic skills -- differ. Thus, here I proposed a numeric investigation of these different definitions to see if they are indeed equivalent.
+
+## Definition 1
+
+This is the intuitive definition to which I am accustomed, and is made explicit here: https://www.ncbi.nlm.nih.gov/pubmed/29713202
+
+$$
+BS_{scaled} = 1 - \frac{\frac{1}{N} \sum (y_i - \hat y_i)^2}{\frac{1}{N} \sum (y_i - \bar y_i)^2}.
+$$
+
+Let's create an R function to calculate this value.
+
+
+```{r}
+scaled_brier_score_1 <- function(obs, pred) {
+  1 - (brier_score(obs, pred) / brier_score(obs, mean(obs)))
+}
+```
+
+## Definition 2
+
+A second formulation of the scaled Brier Score is defined with a slightly different definition of $BS_{max}$, which is in this case described in https://www.ncbi.nlm.nih.gov/pubmed/20010215
+
+$$
+BS_{max} = \bar p \times (1 - \bar p).
+$$
+
+Let's create an R function to calculate this measure.
+
+
+```{r}
+scaled_brier_score_2 <- function(obs, pred) {
+  1 - (brier_score(obs, pred) / (mean(obs) * (1 - mean(obs))))
+}
+```
+
+## Definition 3
+
+A third formulation of the scaled Brier Score is defined with a slightly different definition of $BS_{max}$, which is in this case described in https://www.ncbi.nlm.nih.gov/pubmed/22961910
+
+$$
+BS_{max} = \bar p \times (1 - \bar p)^2 + (1 - \bar p) \times \bar p^2.
+$$
+
+Let's create an R function to calculate this measure.
+
+
+```{r}
+scaled_brier_score_3 <- function(obs, pred) {
+  1 - (brier_score(obs, pred) / (mean(obs) * (1 - mean(obs))^2 + (1 - mean(obs)) * mean(obs)^2))
+}
+```
+
+## Build a model
+
+Let's build a sample model based on the UCI abalone data (https://archive.ics.uci.edu/ml/datasets/Abalone).
+
+
+```{r}
+# get data
+df <- read.csv('https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data')
+names(df) <- c('sex', 'length', 'diameter', 'height', 'weight_whole', 
+               'weight_shucked', 'weight_viscera', 'weight_shell', 'rings')
+# inspect data
+knitr::kable(head(df))
+```
+
+
+
+```{r}
+# Let's predict whether or not an abalone will have > 10 rings
+m1 <- glm(I(rings > 10) ~ ., data = df, family = binomial)
+preds_m1 <- predict(m1, type = 'response')
+
+# And another model with severe class imablance
+m2 <- glm(I(rings > 3) ~ ., data = df, family = binomial)
+preds_m2 <- predict(m2, type = 'response')
+```
+
+## Score the model
+
+
+```{r}
+
+# ---------- Model 1
+# Calculate the Brier Score
+brier_score(df$rings > 10, preds_m1)
+
+# Calculate each type of scaled Brier Score
+scaled_brier_score_1(df$rings > 10, preds_m1)
+scaled_brier_score_2(df$rings > 10, preds_m1)
+scaled_brier_score_3(df$rings > 10, preds_m1)
+
+
+# ---------- Model 2
+# Calculate the Brier Score
+brier_score(df$rings > 3, preds_m2)
+
+# Calculate each type of scaled Brier Score
+scaled_brier_score_1(df$rings > 3, preds_m2)
+scaled_brier_score_2(df$rings > 3, preds_m2)
+scaled_brier_score_3(df$rings > 3, preds_m2)
+```
+

@@ -1,0 +1,207 @@
+---
+title: Evaluating the equivalence of different formulations of the scaled Brier score
+author: Gary Weissman
+date: '2019-04-23'
+slug: evaluating-the-equivalence-of-different-formulations-of-the-scaled-brier-score
+categories:
+  - brier score
+  - predictive modeling
+tags: []
+image:
+  caption: ''
+  focal_point: ''
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>The Brier Score is a composite measure of discrimination and calibration for a prediction model. The Brier Score is defined as</p>
+<p><span class="math display">\[
+BS = \frac{1}{N} \sum (y_i - \hat y_i)^2,
+\]</span></p>
+<p>where <span class="math inline">\(N\)</span> is the number of observations, <span class="math inline">\(y_i\)</span> is the observed outcome, either 0 or 1, and <span class="math inline">\(\hat y_i\)</span> is the predicted probability for the <span class="math inline">\(i\)</span>th observation. Let’s create an R function to calculate the Brier Score:</p>
+<pre class="r"><code>brier_score &lt;- function(obs, pred) {
+  mean((obs - pred)^2)
+}</code></pre>
+<p>The scaled Brier Score accounts for the event rate and provides an immediate comparison to an uninformative model that is equivalent to “just guess the event rate.” An intuitive way to define the scaled Brier Score (also called the “Brier skill score”) is</p>
+<p><span class="math display">\[
+BS_{scaled} = 1 - \frac{BS}{BS_{max}},
+\]</span></p>
+<p>where <span class="math inline">\(BS_{max} = \frac{1}{N} \sum (y_i - \bar y_i)^2\)</span> and <span class="math inline">\(\bar y_i\)</span> is the event rate among the observed outcome.</p>
+</div>
+<div id="my-confusion" class="section level2">
+<h2>My confusion</h2>
+<p>This formulation of the scaled Brier Score makes intuitive sense to me and is how I go about calculating it in practice. However, two other distinct formulations have been proposed for calculating <span class="math inline">\(BS_{max}\)</span> that — at least to the limits of my algebraic skills – differ. Thus, here I proposed a numeric investigation of these different definitions to see if they are indeed equivalent.</p>
+</div>
+<div id="definition-1" class="section level2">
+<h2>Definition 1</h2>
+<p>This is the intuitive definition to which I am accustomed, and is made explicit here: <a href="https://www.ncbi.nlm.nih.gov/pubmed/29713202" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/29713202</a></p>
+<p><span class="math display">\[
+BS_{scaled} = 1 - \frac{\frac{1}{N} \sum (y_i - \hat y_i)^2}{\frac{1}{N} \sum (y_i - \bar y_i)^2}.
+\]</span></p>
+<p>Let’s create an R function to calculate this value.</p>
+<pre class="r"><code>scaled_brier_score_1 &lt;- function(obs, pred) {
+  1 - (brier_score(obs, pred) / brier_score(obs, mean(obs)))
+}</code></pre>
+</div>
+<div id="definition-2" class="section level2">
+<h2>Definition 2</h2>
+<p>A second formulation of the scaled Brier Score is defined with a slightly different definition of <span class="math inline">\(BS_{max}\)</span>, which is in this case described in <a href="https://www.ncbi.nlm.nih.gov/pubmed/20010215" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/20010215</a></p>
+<p><span class="math display">\[
+BS_{max} = \bar p \times (1 - \bar p).
+\]</span></p>
+<p>Let’s create an R function to calculate this measure.</p>
+<pre class="r"><code>scaled_brier_score_2 &lt;- function(obs, pred) {
+  1 - (brier_score(obs, pred) / (mean(obs) * (1 - mean(obs))))
+}</code></pre>
+</div>
+<div id="definition-3" class="section level2">
+<h2>Definition 3</h2>
+<p>A third formulation of the scaled Brier Score is defined with a slightly different definition of <span class="math inline">\(BS_{max}\)</span>, which is in this case described in <a href="https://www.ncbi.nlm.nih.gov/pubmed/22961910" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/22961910</a></p>
+<p><span class="math display">\[
+BS_{max} = \bar p \times (1 - \bar p)^2 + (1 - \bar p) \times \bar p^2.
+\]</span></p>
+<p>Let’s create an R function to calculate this measure.</p>
+<pre class="r"><code>scaled_brier_score_3 &lt;- function(obs, pred) {
+  1 - (brier_score(obs, pred) / (mean(obs) * (1 - mean(obs))^2 + (1 - mean(obs)) * mean(obs)^2))
+}</code></pre>
+</div>
+<div id="build-a-model" class="section level2">
+<h2>Build a model</h2>
+<p>Let’s build a sample model based on the UCI abalone data (<a href="https://archive.ics.uci.edu/ml/datasets/Abalone" class="uri">https://archive.ics.uci.edu/ml/datasets/Abalone</a>).</p>
+<pre class="r"><code># get data
+df &lt;- read.csv(&#39;https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data&#39;)
+names(df) &lt;- c(&#39;sex&#39;, &#39;length&#39;, &#39;diameter&#39;, &#39;height&#39;, &#39;weight_whole&#39;, 
+               &#39;weight_shucked&#39;, &#39;weight_viscera&#39;, &#39;weight_shell&#39;, &#39;rings&#39;)
+# inspect data
+knitr::kable(head(df))</code></pre>
+<table>
+<colgroup>
+<col width="4%" />
+<col width="7%" />
+<col width="10%" />
+<col width="7%" />
+<col width="14%" />
+<col width="16%" />
+<col width="16%" />
+<col width="14%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">sex</th>
+<th align="right">length</th>
+<th align="right">diameter</th>
+<th align="right">height</th>
+<th align="right">weight_whole</th>
+<th align="right">weight_shucked</th>
+<th align="right">weight_viscera</th>
+<th align="right">weight_shell</th>
+<th align="right">rings</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">M</td>
+<td align="right">0.350</td>
+<td align="right">0.265</td>
+<td align="right">0.090</td>
+<td align="right">0.2255</td>
+<td align="right">0.0995</td>
+<td align="right">0.0485</td>
+<td align="right">0.070</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left">F</td>
+<td align="right">0.530</td>
+<td align="right">0.420</td>
+<td align="right">0.135</td>
+<td align="right">0.6770</td>
+<td align="right">0.2565</td>
+<td align="right">0.1415</td>
+<td align="right">0.210</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left">M</td>
+<td align="right">0.440</td>
+<td align="right">0.365</td>
+<td align="right">0.125</td>
+<td align="right">0.5160</td>
+<td align="right">0.2155</td>
+<td align="right">0.1140</td>
+<td align="right">0.155</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">I</td>
+<td align="right">0.330</td>
+<td align="right">0.255</td>
+<td align="right">0.080</td>
+<td align="right">0.2050</td>
+<td align="right">0.0895</td>
+<td align="right">0.0395</td>
+<td align="right">0.055</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left">I</td>
+<td align="right">0.425</td>
+<td align="right">0.300</td>
+<td align="right">0.095</td>
+<td align="right">0.3515</td>
+<td align="right">0.1410</td>
+<td align="right">0.0775</td>
+<td align="right">0.120</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">F</td>
+<td align="right">0.530</td>
+<td align="right">0.415</td>
+<td align="right">0.150</td>
+<td align="right">0.7775</td>
+<td align="right">0.2370</td>
+<td align="right">0.1415</td>
+<td align="right">0.330</td>
+<td align="right">20</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># Let&#39;s predict whether or not an abalone will have &gt; 10 rings
+m1 &lt;- glm(I(rings &gt; 10) ~ ., data = df, family = binomial)
+preds_m1 &lt;- predict(m1, type = &#39;response&#39;)
+
+# And another model with severe class imablance
+m2 &lt;- glm(I(rings &gt; 3) ~ ., data = df, family = binomial)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>preds_m2 &lt;- predict(m2, type = &#39;response&#39;)</code></pre>
+</div>
+<div id="score-the-model" class="section level2">
+<h2>Score the model</h2>
+<pre class="r"><code># ---------- Model 1
+# Calculate the Brier Score
+brier_score(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.1479862</code></pre>
+<pre class="r"><code># Calculate each type of scaled Brier Score
+scaled_brier_score_1(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.3462507</code></pre>
+<pre class="r"><code>scaled_brier_score_2(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.3462507</code></pre>
+<pre class="r"><code>scaled_brier_score_3(df$rings &gt; 10, preds_m1)</code></pre>
+<pre><code>## [1] 0.3462507</code></pre>
+<pre class="r"><code># ---------- Model 2
+# Calculate the Brier Score
+brier_score(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.002690905</code></pre>
+<pre class="r"><code># Calculate each type of scaled Brier Score
+scaled_brier_score_1(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.3362851</code></pre>
+<pre class="r"><code>scaled_brier_score_2(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.3362851</code></pre>
+<pre class="r"><code>scaled_brier_score_3(df$rings &gt; 3, preds_m2)</code></pre>
+<pre><code>## [1] 0.3362851</code></pre>
+</div>
