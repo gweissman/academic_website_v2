@@ -47,7 +47,7 @@ where $TP_c$ and $FP_c$ are the true- and false-positive counts, respectively, $
 
 Here is an implementation of the net benefit calculation that is implemented in the [gmish](https://github.com/gweissman/gmish) package:
 
-```{r nbfunction}
+```{r nbfunction, eval = FALSE}
 
 nb <- function(preds, obs, p_t, weight = 1) {
   weight * tpc(preds, obs, thresh = p_t) / length(preds) - fpc(preds, obs, thresh = p_t) / length(preds) * p_t / (1 - p_t)
@@ -57,7 +57,7 @@ nb <- function(preds, obs, p_t, weight = 1) {
 
 The `tpc` and `fpc` functions provide the true- and false-positive counts at the threshold `p_t`. This function also allows further weighting but we'll save that for a later discussion. The default `weight = 1` reduces to the original equation described above. To calculate the net benefit over the full range of thresholds and plot a decision curve, here is another function also implemented in the same packae:
 
-```{r nbplot}
+```{r nbplot, eval = FALSE}
 nb_plot <- function(form, data, treat_all = TRUE, treat_none = TRUE, omniscient = TRUE, weight = 1, max_neg = 0.1) {
 
   data <- as.data.table(data)
@@ -195,8 +195,6 @@ Let's again highlight the range of interest that we determined ahead of time bas
 Since we chose 30% as our decision threshold, let's examine the neighborhood  around 30% looking at 5% in either direction.
 
 ```{r calcdca3}
-highlight_range <- data.table(x = )
-
 nb_plot(sick_island ~ glm + rf, data = results_dt, 
         treat_all = TRUE, treat_none = TRUE, omniscient = TRUE) &
   geom_rect(xmin = 0.25, xmax = 0.35, ymin = 0, ymax = 0.5, color = 'gray', 
