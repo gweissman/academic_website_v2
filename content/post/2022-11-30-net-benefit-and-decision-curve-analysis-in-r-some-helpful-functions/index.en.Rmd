@@ -1,0 +1,206 @@
+---
+title: Net Benefit and Decision Curve Analysis in R - Some helpful functions
+author: Gary
+date: '2022-11-30'
+slug: net-benefit-and-decision-curve-analysis-in-r-some-helpful-functions
+categories:
+  - R
+  - gmish
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2022-11-30T11:42:35-05:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+## Background
+
+One of the challenges of developing clinical prediction models is deciding which one is best. Sometimes traditional performance measures such as the Brier score or C-statistic might be used to quantify to what extent one model performs better than another. But in the realm of clinical medicine, a model's predictive performance, whether measured by discrimination, calibration, or something else, doesn't guarantee clinical benefit. When it comes to patients, that is usually the most important thing.
+
+The clinical benefit of a prediction model, however, is not straightforward to measure. How well does the model perform for an individual patient? How might delivery of the predictive information to different stakeholders influence (or not) their decision making? Does the model perform better for some groups of patients compared to others? How do individual stakeholders value different aspects of the prediction model, including different errors? How are the costs and benefits accounted for?
+
+If one wanted to answer these questions, undertaking a discrete choice experiment, an ethnographic study with qualitative interviews of all stakeholders, a human factors development and design process, and a randomized clinical trial, could help. But these studies are complex, time consuming, and costly. Is there a faster way to compare the clinical benefit of a group of prediction models?
+
+## Decision curve analysis and net benefit
+
+In 2006, [Vickers and Elkin](https://journals.sagepub.com/doi/10.1177/0272989X06295361) introduced the idea of Decision Curve Analysis, an approach to estimate the net benefit of a prediction model using only the data available from the model itself. That is, using only the predicted probabilities of a model along with the observed outcomes, and relying on the assumption that a decision threshold is chosen to represent the relative importance of sensitivity and specificity (or false positive and false negative predictions), the authors describe how to calculate the **net benefit** of a model. 
+
+In plain language, *the net benefit is the proportion of people rightly treated less the proportion wrongly treated, weighted by the decision threshold to choose treatment or not.*
+
+For a helpful discussion on interpreting decision curves see [Vickers, van Calster, and Steyerberg (2019)](https://diagnprognres.biomedcentral.com/articles/10.1186/s41512-019-0064-7).
+
+In the original paper, the net benefit is calculated as:
+
+$$
+\frac{TP_c}{N} - \frac{FP_c}{N} \left(\frac{p_t}{1 - p_t}\right)
+$$
+
+where $TP_c$ and $FP_c$ are the true- and false-positive counts, respectively, $N$ is the number of observations, and $p_t$ is the probability threshold. 
+
+## An implementation in R
+
+Here is an implementation of the net benefit calculation that is implemented in the [gmish](https://github.com/gweissman/gmish) package:
+
+```{r nbfunction}
+
+nb <- function(preds, obs, p_t, weight = 1) {
+  weight * tpc(preds, obs, thresh = p_t) / length(preds) - fpc(preds, obs, thresh = p_t) / length(preds) * p_t / (1 - p_t)
+}
+
+```
+
+The `tpc` and `fpc` functions provide the true- and false-positive counts at the threshold `p_t`. This function also allows further weighting but we'll save that for a later discussion. The default `weight = 1` reduces to the original equation described above. To calculate the net benefit over the full range of thresholds and plot a decision curve, here is another function also implemented in the same packae:
+
+```{r nbplot}
+nb_plot <- function(form, data, treat_all = TRUE, treat_none = TRUE, omniscient = TRUE, weight = 1, max_neg = 0.1) {
+
+  data <- as.data.table(data)
+  # Identify vars
+  .y <- all.vars(form)[1]
+  .mods <- all.vars(form)[-1]
+
+  dt_list <- lapply(.mods, function(m) {
+    data.table(p_t = seq(0,0.99,.01))[,
+                                                               .(Model = m,
+                                                                 net_benefit = nb(data[,get(m)],
+                                                                                       data[,get(.y)],
+                                                                                       p_t = p_t,
+                                                                                       weight = weight)),
+                                                               by = p_t]
+  })
+
+  if (treat_all) {
+    treat_all_dt <- data.table(p_t = seq(0,0.99,.01))[,
+                                      .(Model = 'Treat all',
+                                        net_benefit = nb(rep(1, nrow(data)), # guess 1 for everyone
+                                                         data[,get(.y)],
+                                                         p_t = p_t,
+                                                         weight = weight)),
+                                      by = p_t]
+    dt_list <- append(dt_list, list(treat_all_dt))
+  }
+
+  if (treat_none) {
+    treat_none_dt <- data.table(Model = 'Treat none', p_t = seq(0,0.99,.01), net_benefit = 0)
+    dt_list <- append(dt_list, list(treat_none_dt))
+  }
+
+  if (omniscient) {
+    omniscient_dt <- data.table(p_t = seq(0,0.99,.01))[,
+                                                      .(Model = 'Treat omnisciently',
+                                                        net_benefit = nb(data[,get(.y)],
+                                                                         data[,get(.y)],
+                                                                         p_t = p_t,
+                                                                         weight = weight)),
+                                                      by = p_t]
+    dt_list <- append(dt_list, list(omniscient_dt))
+  }
+
+  dt_all <- rbindlist(dt_list, use.names = TRUE)
+
+  ymax <- max(dt_all$net_benefit, na.rm = TRUE)
+
+  p <- ggplot(dt_all, aes(p_t, net_benefit, color = Model)) +
+    geom_line(size = 0.3) +
+    xlim(0, 1) + ylim(-1 * max_neg * ymax, ymax * 1.05) +
+    xlab('Threshold probability') + ylab('Net benefit') +
+    theme_bw() +
+    coord_fixed()
+
+  return(p)
+}
+```
+
+This function accepts a formula `form` to indicate the outcome variable and then several models to compare simultaneously. Additional decision curves can be added to the plot for `treat_all`, `treat_none`, and `omniscient` treatment strategies. This calculation is really the benefit accrued to those treated and so the benefit of treating none is by definition zero (and so does not account for the potential costs of a false negative error, i.e. failing to treat someone who could have benefited from treatment).
+
+## Example (A completely invented case study)
+
+Let's say we have a bunch of penguins from the `palmerpenguins` dataset all hanging out together. Sadly, the water has been contaminated on the island of Biscoe and all of penguins from that island need an urgent antidote to prevent them from falling ill. However, the local ecologist doesn't know which island the penguins came from and instead can only measure their bills, flippers, body mass, and sex. Let's build some classification models to help the ecologist find penguins who need treatment.
+
+```{r example, message = FALSE}
+# Load libraries and data
+library(gmish) # remotes::install_github('gweissman/gmish') if not installed already
+library(data.table)
+library(ggplot2)
+library(palmerpenguins)
+library(ranger)
+library(ggsci)
+
+# Use complete cases for the example
+pp <- penguins[complete.cases(penguins),]
+
+# Take a look at the data
+
+ggplot(pp, aes(bill_length_mm, flipper_length_mm, size = body_mass_g, color = sex)) +
+  geom_point() +
+  facet_grid(~island) +
+  theme_bw() +
+  scale_color_aaas()
+  
+# Build a model
+model1 <- glm(island == 'Biscoe' ~ bill_length_mm + flipper_length_mm + body_mass_g + sex, 
+              family = binomial, data = pp)
+summary(model1)
+preds_model1 <- predict(model1, type = 'response')
+# How well does it perform?
+make_perf_df(preds_model1, pp$island == 'Biscoe')
+
+# Build a second model
+model2 <- ranger(island == 'Biscoe' ~ bill_length_mm + flipper_length_mm + body_mass_g + sex, 
+               data = pp, probability = TRUE)
+print(model2)
+preds_model2 <- predict(model2, data = pp)$predictions[,2]
+make_perf_df(preds_model2, pp$island == 'Biscoe')
+
+# Summary predictions
+results_dt <- data.table(sick_island = pp$island == 'Biscoe',
+                         glm = preds_model1,
+                         rf = preds_model2)
+
+# Look at model precision and recall
+pr_plot(sick_island ~ glm + rf, data = results_dt)
+
+# Look at model calibration
+calib_plot(sick_island ~ glm + rf, data = results_dt, cuts = 5, rug = TRUE)
+
+```
+
+So we have a general sense of the models' performance, which seems pretty good overall. The fact that they are all likely very overfit in this example is important to mention but we'll deal with that in a later conversation. Now, we're stuck with the question, which model should we use to pick out the penguins for treatment? The regression model or the random forest model?
+
+The intended use case for decision curves is to identify the optimal model *given* a choice of threshold. In this case, let's say that the medication does have some but not terrible side effects, so we prefer a decision threshold around 30%. Which model provides the most benefit in this range?
+
+```{r calcdca}
+# For simplicity, just plot the net benefit of the two models trained above
+nb_plot(sick_island ~ glm + rf, data = results_dt, 
+        treat_all = FALSE, treat_none = FALSE, omniscient = FALSE)
+```
+
+Clearly in the 30% threshold range, the random forest model provides more benefit to those treated. Now let's compare these models against treat all, treat none, and treat omnisciently strategies.
+
+```{r calcdca2}
+nb_plot(sick_island ~ glm + rf, data = results_dt, 
+        treat_all = TRUE, treat_none = TRUE, omniscient = TRUE)
+```
+
+The treat none strategy, by definition, provides zero net benefit, so represents a lower bound of what the other models should provide if they are useful. The treat omnisciently strategy represents the upper bound on what any model could provide. In this case, the treat all strategy does a little better than the glm model in the 10 to 20% threshold range, but otherwise provides less net benefit than both the glm and rf across the rest of the range.
+
+Let's again highlight the range of interest that we determined ahead of time based on our choice of threshold which here determines the relative weighting of true and false positives. However, if you asked the penguins, they might choose a different threshold! 
+
+Since we chose 30% as our decision threshold, let's examine the neighborhood  around 30% looking at 5% in either direction.
+
+```{r calcdca3}
+highlight_range <- data.table(x = )
+
+nb_plot(sick_island ~ glm + rf, data = results_dt, 
+        treat_all = TRUE, treat_none = TRUE, omniscient = TRUE) &
+  geom_rect(xmin = 0.25, xmax = 0.35, ymin = 0, ymax = 0.5, color = 'gray', 
+            fill = 'gray', alpha = 0.01,  inherit.aes = FALSE)
+```
+
+In this range of interest, the random forest model provides the highest net benefit. Let's go save some penguins!
