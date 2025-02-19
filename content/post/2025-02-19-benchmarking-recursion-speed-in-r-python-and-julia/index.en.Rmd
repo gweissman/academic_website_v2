@@ -1,0 +1,131 @@
+---
+title: Benchmarking Recursion Speed in R, Python, and Julia
+author: Gary Weissman
+date: '2025-02-19'
+slug: benchmarking-recursion-speed-in-r-python-and-julia
+categories:
+  - R
+  - python
+  - julia
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2025-02-19T08:40:21-05:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+output: 
+  html_document: 
+    toc: true
+    number_sections: true
+---
+
+There are so many exciting things happening the world of statistical programming languages for data science. R, Python, and Julia each has great reasons to include in your toolbox. Arguing which one is best is akin to arguing over whether Spanish, Italian, or French is "better." Our lab uses them all and we try to suit the tool to the project and its people.^[As an extra bonus, this notebook is a great example of how to use R, Python, and Julia together in a single notebook!]
+
+Although not typically used for data science applications, recursive functions offer a quick and easy (albeit limited) test of a programming language's speed. The [Fibonacci sequence](https://en.wikipedia.org/wiki/Fibonacci_sequence) is a sequence of numbers in which the next value equals the sum of the two previous values. Thus the sequence looks like
+
+$$
+F_n = 0, 1, 1, 2, 3, 5, 18, 13...
+$$
+
+Calculating the $N^{th}$ value of the sequence could be done iteratively using a `for` loop. For many programming languages, this is probably the fastest approach. Alternatively, a recursive approach --- one in which a function calls itself again and again --- also provides an elegant solution.
+
+Let's try to implement a recursive function to calculate the $N^{th}$ value of the Fibonacci sequence in R, Python, and Julia. We'll time each run and see how these approaches compare.
+
+## R
+
+```{r}
+# Define recursion function for fibonacci sequence
+fib <- function(n) {
+  if (n == 0) return (0)
+  if (n <= 2) return (1)
+  return (fib(n - 1) + fib(n - 2))
+}
+
+# Define range of sequence to explore, 1 through 40
+Ns = 0:40
+
+# Estimate the time taken for each run
+Ts = sapply(Ns, \(n) system.time(fib(n))[3])
+
+# Plot the results
+plot(Ns, Ts, type = "l", 
+     xlab = "N", ylab = "time (s)", 
+     col = "blue",
+     main = "Recursive calculation of Fibonacci numbers (R)")
+
+# Total time
+print(paste0("Total time was ", sum(Ts), " seconds in R."))
+```
+
+## Python 
+
+```{python}
+import matplotlib.pyplot as plt
+from timeit import timeit
+
+# Define recursion function for fibonacci sequence
+def fib(n):
+  if (n == 0):
+    return 0
+  elif (n <= 2):
+    return 1
+  else:
+    return (fib(n - 1) + fib(n - 2))
+
+# Define range of sequence to explore, 1 through 40
+Ns = range(0,41)
+
+# Estimate the time taken for each run
+Ts = [timeit(lambda: fib(x), number = 1) for x in Ns]
+
+# Plot the results
+plt.plot(Ns, Ts, marker = "")
+plt.xlabel("N")
+plt.ylabel("time (s)")
+plt.title("Recursive calculation of Fibonacci numbers (Python)")
+plt.show()
+
+# Total time
+print(f"Total time was {sum(Ts)} seconds in Python.")
+```
+
+## Julia
+
+```{julia}
+using Plots;
+
+# Define recursion function for fibonacci sequence
+fib = function(n)
+  if n == 0
+    return 0
+  elseif n <= 2
+    return 1
+  else
+    return fib(n - 1) + fib(n - 2)
+  end  
+end;
+
+# Define range of sequence to explore, 1 through 40
+Ns = 0:40;
+
+# Estimate the time taken for each run
+Ts = [@elapsed fib(x) for x in Ns];
+
+# Plot the results
+plot(Ns, Ts, 
+     xlabel = "N", ylabel = "time (s)", 
+     title = "Recursive calculation of Fibonacci numbers (Julia)")
+
+# Total time
+print("Total time was $(sum(Ts)) seconds in Julia")
+```
+
+
+## Summary
+
+Calculating the first 40 elements of the Fibonacci sequence using a recursive algorithm took about 152, 24, and 11 seconds, for R, Python, and Julia, respectively. Overall pretty fast, and pretty significant differences among the languages. Notably, we didn't account for start up time, time to check syntax, time to set up the environment, and other overheard. The R code was easily written in base R without the need for any additional packages. The Python environment was notably the slowest to set up and required installing `matplotlib` into a virtual environment that would run within Rstudio, which was used to render this document. The Julia example required installing and loading the `Plots` library, but this was already done as the same local environment I use was called by Rstudio without any additional configuration. Which language do you reach for first? When in Rome...
